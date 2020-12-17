@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/jeandias/chatbot/bot"
 )
 
 var addr = flag.String("addr", ":8080", "http service address")
@@ -27,19 +28,19 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "home.html")
 }
 
-func startChatHub(hub *Hub) {
+func startChatHub(hub *bot.Hub) {
 	go hub.Run()
 }
 
 func main() {
 	flag.Parse()
-	chatbot := NewAgent()
-	hub := NewHub(chatbot)
+	chatbot := bot.NewAgent()
+	hub := bot.NewHub(chatbot)
 	startChatHub(hub)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", serveHome)
-	r.Handle("/ws", ServeWs(hub))
+	r.Handle("/ws", bot.ServeWs(hub))
 
 	err := http.ListenAndServe(*addr, r)
 	if err != nil {
