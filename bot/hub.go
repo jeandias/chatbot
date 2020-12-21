@@ -4,9 +4,16 @@
 
 package bot
 
+import "encoding/json"
+
 type ClientMessage struct {
 	client  *Client
 	message []byte
+}
+
+type SocketMessage struct {
+	Event   string
+	Message string
 }
 
 // Hub maintains the set of active clients and broadcasts messages to the
@@ -55,7 +62,11 @@ func (h *Hub) Run() {
 			}
 		case clientmsg := <-h.broadcastmsg:
 			client := clientmsg.client
-			reply := h.chatbot.Reply(string(clientmsg.message))
+
+			var clientJson SocketMessage
+			json.Unmarshal([]byte(clientmsg.message), &clientJson)
+
+			reply := h.chatbot.Reply(clientJson.Event, clientJson.Message)
 			h.SendMessage(client, []byte(reply))
 		case message := <-h.broadcast:
 			for client := range h.clients {

@@ -1,49 +1,35 @@
 package bot
 
-import "strings"
+import watson "github.com/jeandias/chatbot/watson"
 
 type Bot interface {
 	Greeting() string
-	Reply(string) string
+	Reply(string, string) string
 }
 
 type Agent struct {
 	Bot
-	knowledgeBase map[string]string
-}
-
-func (a *Agent) initializeIntelligence() {
-	a.knowledgeBase = map[string]string{
-		"hey":            "Hey! How are you?",
-		"hello":          "Hey! How are you?",
-		"hi":             "Hey! How are you?",
-		"good morning":   "Hey! How are you?",
-		"good evening":   "Hey! How are you?",
-		"hey there":      "Hey! How are you?",
-		"yo":             "Hey! How are you?",
-		"bye":            "Goodbye!",
-		"goodbye":        "Goodbye!",
-		"see you around": "Goodbye!",
-		"see you later":  "Goodbye!",
-	}
 }
 
 func (a *Agent) Greeting() string {
-	return "Can I help you?"
+	return "Hi!"
 }
 
-func (a *Agent) Reply(msg string) string {
-	key := strings.TrimSpace(strings.ToLower(msg))
-	reply := a.knowledgeBase[key]
+func (a *Agent) Reply(event string, msg string) string {
+	switch event {
+	case "welcomeNewUser":
+		return "Welcome " + msg + ". Nice to meet you.\n How can I assist you?"
 
-	if reply == "" {
-		reply = "Sorry, I didn't understand."
+	case "welcomeOldUser":
+		return "Welcome back " + msg + ". How can I assist you?"
+
+	case "userChangeName":
+		return "You changed your nick name? I liked, " + msg
+	default:
+		return watson.CallAssistant(msg)
 	}
-	return reply
 }
 
 func NewAgent() *Agent {
-	agent := &Agent{}
-	agent.initializeIntelligence()
-	return agent
+	return &Agent{}
 }

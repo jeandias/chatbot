@@ -8,12 +8,15 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/jeandias/chatbot/bot"
+	watson "github.com/jeandias/chatbot/watson"
+	"github.com/joho/godotenv"
 )
 
-var addr = flag.String("addr", ":8080", "http service address")
+var addr = flag.String("addr", GetPort(), "http service address")
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
@@ -33,6 +36,13 @@ func startChatHub(hub *bot.Hub) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Print(err)
+	}
+
+	watson.StartWatsonAssistant()
+
 	flag.Parse()
 	chatbot := bot.NewAgent()
 	hub := bot.NewHub(chatbot)
@@ -42,8 +52,19 @@ func main() {
 	r.HandleFunc("/", serveHome)
 	r.Handle("/ws", bot.ServeWs(hub))
 
-	err := http.ListenAndServe(*addr, r)
+	err = http.ListenAndServe(*addr, r)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+// Get the Port from the environment so we can run on Heroku
+func GetPort() string {
+	var port = os.Getenv("PORT")
+	// Set a default port if there is nothing in the environment
+	if port == "" {
+		port = "4000"
+		log.Println("INFO: No PORT environment variable detected, defaulting to " + port)
+	}
+	return ":" + port
 }
